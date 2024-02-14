@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="jquery-ui.min.css">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+
+    <script src="jquery-1.11.2.min.js"></script>
+    <script src="jquery-ui.min.js"></script>
+    <title>VCard Signer</title>
+    <style>
+
+        
+        #vcard-grid { 
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            grid-auto-rows: minmax(100px, auto);
+            gap: 10px; /* Adjust the gap as needed */
+            padding: 10px;
+            max-height: 300px;
+            overflow-x: hidden;
+            overflow-y: scroll;
+        }
+        #vcard-grid img {
+            box-shadow: 2px 2px 6px 0px  rgba(0,0,0,0.3);
+            max-width: 100%;
+            cursor: pointer;
+            margin-right: 20px; /* Adjust spacing between images */
+            vertical-align: middle; /* Align images to middle if they are of different heights */
+            width: 100%;
+            height: auto;
+            object-fit: cover; /* This will cover the grid area, you can use 'contain' to fit the image within */
+       
+        }
+        @media (max-width: 600px) {
+            #vcard-grid {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            }
+        }
+        body {
+            max-width: 700px;
+            margin: auto;
+            background-image: url("bg.jpg");
+            background-repeat: repeat;
+            background-size: 30%;
+        }
+        body main {
+            padding: 30px;
+            background-color: rgba(240, 255, 255, 0.541);
+        }
+        .txt-color-picker
+        {
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <div class="scrollable">
+
+            <h2>Gallery</h2>
+            <p>Chose from one of our many delectable cards.</p>
+             
+            <main id="vcard-grid">
+
+            </main>  
+        </div>
+        <div>
+            <h2>Editor</h2>
+            <p>Click to add text. Preview below, right click to save.</p>
+
+            <div id="meme-controls">
+                <input type="button" name="add_text" value="Add Text" class="btn-add" onClick="createTextArea()" />
+                <input type="button" name="remove_text" value="Clear" class="btn-add" onClick="removeTextAreas()" />
+                <input type="color" class="txt-color-picker" value="#00ffe7"/>
+            </div>
+            
+            <div id="meme-bg-target">
+                <img src="default.jpg" id="img-meme-bg" class="img-meme-bg" />
+            </div>
+            <div>
+                <input type="button" name="save-as-image" id="save-as-image" class="btn-save" value="Render" />
+            </div>
+            
+            <div class="label-preview">Preview</div>
+            <div id="meme-canvas-container">
+                <canvas id="meme-preview"></canvas>
+            </div>
+            
+        </div>
+    </main>
+</body>
+</html>
+
+<script>
+    $(document).ready(function() {
+    const images = [
+        "cards/jpvcard.jpg",
+        "cards/muskmars.jpg",
+        "cards/topg.jpg",
+        "cards/heartCandy.jpg",
+        "cards/alexjones.jpg",
+        "cards/bidenfall.jpg",
+        "cards/blackhole.jpg",
+        "cards/cinderella.jpg",
+        "cards/crash.jpg",
+        "cards/easylove.jpg",
+        "cards/epsteinhang.jpg",
+        "cards/epsteinlist.jpg",
+        "cards/ieslow.jpg",
+        "cards/kanye.jpg",
+        "cards/putinyou.jpg",
+        "cards/trumpwall.jpg",
+        "cards/tswift.jpg"
+    ];
+
+    const $main = $('#vcard-grid');
+
+    images.forEach((imageSrc) => {
+        $('<img>', {
+            src: imageSrc
+        }).appendTo($main);
+    });
+
+    $('#vcard-grid img').click(function() {
+        var imgSrc = $(this).attr('src');
+        $('#img-meme-bg').attr('src', imgSrc);
+    });
+
+    $('.txt-color-picker').on('input', function() {
+        var newColor = $(this).val(); // Get the color from the color picker
+        $('.meme-txt-area').css('color', newColor); // Set the color of all text areas
+    });
+});
+
+function showPreview(objFileInput) 
+{
+    if (objFileInput.files[0]) 
+    {
+        var fileReader = new FileReader();
+        fileReader.onload = function (e) {
+            $("#meme-bg-target img").attr('src', e.target.result);
+        }
+        fileReader.readAsDataURL(objFileInput.files[0]);
+    }
+}
+function createTextArea() 
+{
+	var txtAreaHTML = "<div contentEditable='true' class='meme-txt-area'></div>";
+	$("#meme-bg-target").append(txtAreaHTML);
+	$(".meme-txt-area").draggable();
+    // $(".meme-txt-area").resizable({
+    //     handles: 'se', // Southeast handle for resizing, you can include more handles
+    //     resize: function(event, ui) {
+    //         // Resize the contentEditable area as the wrapper is resized
+    //         ui.element.children('.meme-txt-area').css({
+    //             width: ui.size.width,
+    //             height: ui.size.height
+    //         });
+    //     }
+    // });
+    $(".meme-txt-area").css("color", $('.txt-color-picker').val());
+	$(".meme-txt-area").focus();
+}
+function removeTextAreas() 
+{
+    $(".meme-txt-area").remove();
+}
+
+function copyToCanvas(htmlElement) 
+{
+	var canvas = document.getElementById("meme-preview");
+    var ctx = canvas.getContext("2d");
+
+ 	image = new Image(0, 0);
+    	image.onload = function () {
+    		canvas.width = this.naturalWidth;
+    	    canvas.height = this.naturalHeight;
+
+    	    var top = 0;
+            var left = 0;
+            var cellspace = 0;
+            var memeTargetWidth = $("#meme-bg-target").width();
+            var memeTargetHeight = $("#meme-bg-target").height();
+            var font = 24;
+            newFont = ( font / memeTargetWidth) * canvas.width;
+
+            ctx.drawImage(this, 0,0);
+            ctx.font = newFont+"px Arial";
+            ctx.fillStyle = $('.txt-color-picker').val();
+
+          $(".meme-txt-area").each(function(){
+
+              cellspace = parseInt($(this).css("padding"));
+              left = parseInt($(this).css("left")) + cellspace;
+              newLeft = ( left / memeTargetWidth) * canvas.width;
+              top = parseInt($(this).css("top")) + 3 * cellspace;
+              newTop = ( top / memeTargetHeight) * canvas.height;
+              ctx.fillText($(this).text(), newLeft, newTop);
+    	      });
+    	};
+    
+   image.src = $("#img-meme-bg").attr("src");
+}
+
+$(document).ready(function (e) {
+	$("#save-as-image").on('click', function () {
+     	copyToCanvas($('#meme-bg-target'));
+    });
+	
+});
+</script>
